@@ -1,8 +1,12 @@
+# -*- coding: UTF-8 -*-
+# @Author: LIU Lu
+# @Date: 2020/5/7
+# @SoftWare: PyCharm
+
 import time
 import json
 from json import JSONDecodeError
-import selenium
-from selenium.webdriver import Chrome, ChromeOptions, Firefox, FirefoxOptions
+from selenium.webdriver import Chrome, ChromeOptions, Firefox
 
 
 class User:
@@ -20,19 +24,30 @@ class Spider:
             print("信息文件有误")
             return
 
+        # browser type
+        type = info["browserType"]
+        if type not in ["chrome", "firefox"]:
+            print("不支持的浏览器类型")
+            return
+        # <<< if
         self.user = User(username=info["username"], password=info["password"])
+        self.name = info["name"]
         # course name
         self.course = info["course"]
         # total count
         self.count = info["count"]
-        # webdriver
-        option = ChromeOptions()
-        option.add_experimental_option('excludeSwitches', ['enable-automation'])
-        option.add_experimental_option('useAutomationExtension', False)
 
-        self.driver = Chrome(options=option)
+        # webdriver
+        if type == "chrome":
+            option = ChromeOptions()
+            option.add_experimental_option('excludeSwitches', ['enable-automation'])
+            option.add_experimental_option('useAutomationExtension', False)
+            self.driver = Chrome(options=option)
+        else:
+            self.driver = Firefox()
+
         self.driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
-        "source": """
+            "source": """
                 Object.defineProperty(navigator, 'webdriver', {
                   get: () => undefined
                 })
@@ -41,7 +56,7 @@ class Spider:
         self.driver.execute_cdp_cmd("Network.enable", {})
         self.driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": {"User-Agent": "browser1"}})
 
-    def login(self) -> bool:
+    def login(self) -> None:
         """ login in given account
         :return: whether it is successful
         """
@@ -61,7 +76,7 @@ class Spider:
 
     def handle_one(self, ele) -> bool:
         """ answer one question
-        :param id_: item id
+        :param ele_: tag in DOM
         :return whether it is successful
         """
         # get question id then build new URL
@@ -74,17 +89,17 @@ class Spider:
         time.sleep(2)
         # switch to new tab
         self.driver.switch_to.window(self.driver.window_handles[1])
-        # get first answer of others'
-        answer = self.driver.find_elements_by_css_selector("#answer_lab > *")[0].find_element_by_css_selector("div > div > pre").text
 
-        # input answer and submit
         try:
+            # get first answer of others'
+            answer = self.driver.find_elements_by_css_selector("#answer_lab > *")[0].find_element_by_css_selector("div > div > pre").text
+            # input answer and submit
             self.driver.find_element_by_id("show_answer_1").click()
         except:
             self.driver.close()
             self.driver.switch_to.window(self.driver.window_handles[0])
             return False
-
+        # <<< try-except
         self.driver.find_element_by_css_selector("textarea.my-ans-textarea").send_keys(answer)
         self.driver.find_element_by_id("answer_save_zz").click()
         time.sleep(1)
@@ -105,7 +120,7 @@ class Spider:
 
     def solve(self) -> None:
         """ answer multiple questions
-        :param total_cnt: count of questions
+        在莲池召唤我的精灵
         """
         self.login()
         # open questions' page
@@ -118,28 +133,33 @@ class Spider:
             if self.course in c.get_attribute("title"):
                 c.click()
                 break
-
+            # <<< if
+        # <<< for
         time.sleep(0.5)
 
         # roll down to load more questions
         for i in range(int(8 * self.count / 10)):
             self.driver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
             time.sleep(0.5)
-
+        # <<< for
         questions = self.driver.find_elements_by_css_selector("#lateList >*")
         cnt = 0
 
         for q in questions:
+            # count of existing answers
             n_answers = q.find_element_by_css_selector(".qa_topic_reaction").\
                 find_element_by_css_selector(".qa_topic_answerNum").text
             n_answers = int(n_answers)
+
             if 0 < n_answers <= 100:
-                self.handle_one(q)
-                cnt += 1
+                if self.handle_one(q):
+                    cnt += 1
             if cnt >= self.count:
                 break
         # <<< for
         self.driver.quit()
+        log = f"你的名字: {self.name}  课程: {self.course}  成功复读题目数: {cnt}\n"
+        print(log)
 
 
 if __name__ == '__main__':
