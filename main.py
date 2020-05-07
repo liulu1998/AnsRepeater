@@ -36,6 +36,8 @@ class Spider:
         self.course = info["course"]
         # total count
         self.count = info["count"]
+        # school name
+        self.school = info["school"]
 
         # webdriver
         if type == "chrome":
@@ -64,7 +66,7 @@ class Spider:
         self.driver.find_element_by_id("qStudentID").click()
         time.sleep(0.5)
         # school name
-        self.driver.find_element_by_id("quickSearch").send_keys("哈尔滨工程")
+        self.driver.find_element_by_id("quickSearch").send_keys(self.school[0: len(self.school) - 1])
         schools = self.driver.find_elements_by_css_selector("#schoolListCode > *")
         schools[0].click()
         # student id and password
