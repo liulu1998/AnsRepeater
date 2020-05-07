@@ -43,18 +43,18 @@ class Spider:
             option.add_experimental_option('excludeSwitches', ['enable-automation'])
             option.add_experimental_option('useAutomationExtension', False)
             self.driver = Chrome(options=option)
+            self.driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+                "source": """
+                        Object.defineProperty(navigator, 'webdriver', {
+                        get: () => undefined
+                    })
+                """
+            })
+            self.driver.execute_cdp_cmd("Network.enable", {})
+            self.driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": {"User-Agent": "browser1"}})
         else:
             self.driver = Firefox()
 
-        self.driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
-            "source": """
-                Object.defineProperty(navigator, 'webdriver', {
-                  get: () => undefined
-                })
-              """
-        })
-        self.driver.execute_cdp_cmd("Network.enable", {})
-        self.driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": {"User-Agent": "browser1"}})
 
     def login(self) -> None:
         """ login in given account
@@ -140,7 +140,7 @@ class Spider:
         # roll down to load more questions
         for i in range(int(8 * self.count / 10)):
             self.driver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
-            time.sleep(0.5)
+            time.sleep(1)
         # <<< for
         questions = self.driver.find_elements_by_css_selector("#lateList >*")
         cnt = 0
