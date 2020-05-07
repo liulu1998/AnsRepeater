@@ -54,7 +54,9 @@ class Spider:
         schools[0].click()
         # student id and password
         self.driver.find_element_by_id("clCode").send_keys(self.user.username)
+        time.sleep(0.2)
         self.driver.find_element_by_id("clPassword").send_keys(self.user.password)
+        time.sleep(0.2)
         self.driver.find_element_by_css_selector("span.wall-sub-btn").click()
 
     def handle_one(self, ele) -> bool:
@@ -92,7 +94,7 @@ class Spider:
         # self.driver.find_element_by_css_selector("span.option-zan").click()
 
         # JS 点击
-        js = 'document.getElementsByClassName("option-zan")[0].click()'
+        js = 'document.getElementsByClassName("option-zan")[1].click()'
         self.driver.execute_script(js)
         time.sleep(0.5)
 
@@ -110,12 +112,20 @@ class Spider:
         time.sleep(0.5)
         self.driver.get("https://wenda.zhihuishu.com/shareCourse/qaAnswerIndexPage")
 
+        # select certain course
+        courses = self.driver.find_elements_by_css_selector("li.clearfix > div")
+        for c in courses:
+            if self.course in c.get_attribute("title"):
+                c.click()
+                break
+
+        time.sleep(0.5)
+
         # roll down to load more questions
-        for i in range(int(5 * self.count / 10)):
+        for i in range(int(8 * self.count / 10)):
             self.driver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
             time.sleep(0.5)
 
-        # TODO select certain course
         questions = self.driver.find_elements_by_css_selector("#lateList >*")
         cnt = 0
 
@@ -123,7 +133,7 @@ class Spider:
             n_answers = q.find_element_by_css_selector(".qa_topic_reaction").\
                 find_element_by_css_selector(".qa_topic_answerNum").text
             n_answers = int(n_answers)
-            if n_answers > 0:
+            if 0 < n_answers <= 100:
                 self.handle_one(q)
                 cnt += 1
             if cnt >= self.count:
