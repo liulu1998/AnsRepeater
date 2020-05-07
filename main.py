@@ -1,6 +1,7 @@
 import time
 import json
 from json import JSONDecodeError
+import selenium
 from selenium.webdriver import Chrome, ChromeOptions, Firefox, FirefoxOptions
 
 
@@ -75,10 +76,26 @@ class Spider:
         answer = self.driver.find_elements_by_css_selector("#answer_lab > *")[0].find_element_by_css_selector("div > div > pre").text
 
         # input answer and submit
-        self.driver.find_element_by_id("show_answer_1").click()
+        try:
+            self.driver.find_element_by_id("show_answer_1").click()
+        except:
+            self.driver.close()
+            self.driver.switch_to.window(self.driver.window_handles[0])
+            return False
+
         self.driver.find_element_by_css_selector("textarea.my-ans-textarea").send_keys(answer)
         self.driver.find_element_by_id("answer_save_zz").click()
+        time.sleep(1)
+
+        # 为自己点赞
+        # 直接点击
+        # self.driver.find_element_by_css_selector("span.option-zan").click()
+
+        # JS 点击
+        js = 'document.getElementsByClassName("option-zan")[0].click()'
+        self.driver.execute_script(js)
         time.sleep(0.5)
+
         # close new tab and back to main tab
         self.driver.close()
         self.driver.switch_to.window(self.driver.window_handles[0])
@@ -111,6 +128,8 @@ class Spider:
                 cnt += 1
             if cnt >= self.count:
                 break
+        # <<< for
+        self.driver.quit()
 
 
 if __name__ == '__main__':
