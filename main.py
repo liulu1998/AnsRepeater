@@ -36,10 +36,12 @@ class Spider:
             option = ChromeOptions()
             # option.add_experimental_option('excludeSwitches', ['enable-automation'])
             # option.add_experimental_option('useAutomationExtension', False)
+            option.add_experimental_option("excludeSwitches", ["enable-logging"])
             # headless
             if not info["gui"]:
                 option.add_argument('--headless')
             # <<< if
+            option.add_experimental_option("excludeSwitches", ["enable-logging"])
             self.driver = Chrome(options=option)
             self.driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
                 "source": """
@@ -151,7 +153,11 @@ class Spider:
                 # count of existing answers
                 n_answers = q.find_element_by_css_selector(".qa_topic_reaction").\
                     find_element_by_css_selector(".qa_topic_answerNum").text
-                n_answers = int(n_answers)
+                # in case n is "999+"
+                try:
+                    n_answers = int(n_answers)
+                except ValueError:
+                    continue
 
                 if 0 < n_answers <= 100:
                     if self.handle_one(q):
