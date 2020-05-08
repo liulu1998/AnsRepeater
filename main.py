@@ -133,10 +133,7 @@ class Spider:
         courses = self.driver.find_elements_by_css_selector("li.clearfix > div")
         for c in courses:
             if self.course in c.get_attribute("title"):
-                # c.click()
                 self.driver.execute_script("arguments[0].click();", c)
-                self.driver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
-
                 break
             # <<< if
         # <<< for
