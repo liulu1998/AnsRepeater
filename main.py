@@ -136,15 +136,37 @@ class Spider:
         time.sleep(0.5)
         self.driver.get("https://wenda.zhihuishu.com/shareCourse/qaAnswerIndexPage")
 
-        # select certain course
-        courses = self.driver.find_elements_by_css_selector("li.clearfix > div")
-        for c in courses:
-            if self.course in c.get_attribute("title"):
-                c.click()
+        # >>> select given course
+        # 展开所有折叠课程
+        js = 'document.getElementsByClassName("qa_moreCard_wapper")[0].click()'
+        # self.driver.find_element_by_class_name("qa_moreCard_wapper").click()
+        self.driver.execute_script(js)
+        time.sleep(0.1)
+
+        # groups of courses
+        tmp = self.driver.find_elements_by_css_selector("ul#allCourseList > li")
+        course_groups = []
+
+        for t in tmp:
+            if t.get_attribute("class") == "qa_historyCard":
                 break
-            # <<< if
+            else:
+                course_groups.append(t)
+        # <<< for
+
+        for group in course_groups:
+            flag = False
+            for c in group.find_elements_by_tag_name("div"):
+                if self.course in c.get_attribute("title"):
+                    flag = True
+                    c.click()
+                    break
+            if flag:
+                break
+            # <<< for
         # <<< for
         time.sleep(0.5)
+        # <<< select given course
 
         # roll down to load more questions
         for i in range(int(8 * self.count / 10)):
