@@ -93,7 +93,7 @@ class Spider:
 
         try:
             # get first answer of others
-            answer = self.driver.find_elements_by_css_selector("#answer_lab > *")[0].\
+            answer = self.driver.find_elements_by_css_selector("#answer_lab > *")[-1].\
                 find_element_by_css_selector("div > div > pre").text
             # input answer and submit
             self.driver.find_element_by_id("show_answer_1").click()
@@ -134,7 +134,7 @@ class Spider:
                 if now_proceed_course in c.get_attribute("title"):
                     self.driver.execute_script("arguments[0].click();", c)
                     break
-            # <<< for
+            # <<< for c in courses
 
             time.sleep(0.5)
             # <<< select given course
@@ -158,10 +158,10 @@ class Spider:
                         cnt += 1
                 if cnt >= self.count:
                     break
-            # <<< for
+            # <<< for q in questions
             log = f"你的名字: {self.user.name}  课程: {now_proceed_course}  成功复读题目数: {cnt}\n"
             print(log)
-
+        # <<< for, handle multiple courses
         self.driver.quit()
 
 

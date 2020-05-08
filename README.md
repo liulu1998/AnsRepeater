@@ -28,8 +28,9 @@
         "school": "xx大学",             // 学校名
         "username" : "2017061910",     // 学号
         "password": "abc",            // 密码
-        "course": "管理学",          // 完整课程名
-        "count": 3                 // 复读的题目数
+        "course": ["管理学", "毛泽东"],          // 完整课程名, 支持多个课程
+        // "course": ["管理学"],    // 单个课程如此填写
+        "count": 3                 // 复读的题目数, 每门课程复读次数相同
         "browserType": "chrome"   // 浏览器类型, chrome 或 firefox
         "gui": true              // 是否弹出浏览器窗口, true 或 false
     }
