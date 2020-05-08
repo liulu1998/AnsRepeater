@@ -128,37 +128,41 @@ class Spider:
 
         # select given course
         courses = self.driver.find_elements_by_css_selector("li.clearfix > div")
-        for c in courses:
-            if self.course in c.get_attribute("title"):
-                self.driver.execute_script("arguments[0].click();", c)
-                break
-        # <<< for
-        time.sleep(0.5)
-        # <<< select given course
 
-        # roll down to load more questions
-        for i in range(int(8 * self.count / 10)):
-            self.driver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
-            time.sleep(1)
-        # <<< for
-        questions = self.driver.find_elements_by_css_selector("#lateList >*")
-        cnt = 0
+        for now_proceed_course in self.course:
+            for c in courses:
+                if now_proceed_course in c.get_attribute("title"):
+                    self.driver.execute_script("arguments[0].click();", c)
+                    break
+            # <<< for
 
-        for q in questions:
-            # count of existing answers
-            n_answers = q.find_element_by_css_selector(".qa_topic_reaction").\
-                find_element_by_css_selector(".qa_topic_answerNum").text
-            n_answers = int(n_answers)
+            time.sleep(0.5)
+            # <<< select given course
 
-            if 0 < n_answers <= 100:
-                if self.handle_one(q):
-                    cnt += 1
-            if cnt >= self.count:
-                break
-        # <<< for
+            # roll down to load more questions
+            for i in range(int(8 * self.count / 10)):
+                self.driver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
+                time.sleep(1)
+            # <<< for
+            questions = self.driver.find_elements_by_css_selector("#lateList >*")
+            cnt = 0
+
+            for q in questions:
+                # count of existing answers
+                n_answers = q.find_element_by_css_selector(".qa_topic_reaction").\
+                    find_element_by_css_selector(".qa_topic_answerNum").text
+                n_answers = int(n_answers)
+
+                if 0 < n_answers <= 100:
+                    if self.handle_one(q):
+                        cnt += 1
+                if cnt >= self.count:
+                    break
+            # <<< for
+            log = f"你的名字: {self.user.name}  课程: {now_proceed_course}  成功复读题目数: {cnt}\n"
+            print(log)
+
         self.driver.quit()
-        log = f"你的名字: {self.user.name}  课程: {self.course}  成功复读题目数: {cnt}\n"
-        print(log)
 
 
 if __name__ == '__main__':
