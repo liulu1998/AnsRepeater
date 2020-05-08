@@ -1,5 +1,4 @@
 # -*- coding: UTF-8 -*-
-# @Author: LIU Lu
 # @Date: 2020/5/7
 # @SoftWare: PyCharm
 
@@ -115,8 +114,6 @@ class Spider:
         time.sleep(1)
 
         # 为自己点赞
-        # self.driver.find_element_by_css_selector("span.option-zan").click()
-
         # using JavaScript
         js = 'document.getElementsByClassName("option-zan")[1].click()'
         self.driver.execute_script(js)
@@ -129,14 +126,14 @@ class Spider:
 
     def solve(self) -> None:
         """ answer multiple questions
-        在莲池召唤我的精灵
+        在莲池召唤我的精灵 —— 刘总
         """
         self.login()
         # open questions' page
         time.sleep(0.5)
         self.driver.get("https://wenda.zhihuishu.com/shareCourse/qaAnswerIndexPage")
 
-        # select certain course
+        # select given course
         courses = self.driver.find_elements_by_css_selector("li.clearfix > div")
 
         for now_proceed_course in self.course:
@@ -169,7 +166,7 @@ class Spider:
                 if cnt >= self.count:
                     break
             # <<< for
-            log = f"你的名字: {self.user.name}  课程: {self.course}  成功复读题目数: {cnt}\n"
+            log = f"你的名字: {self.user.name}  课程: {now_proceed_course}  成功复读题目数: {cnt}\n"
             print(log)
 
         self.driver.quit()
