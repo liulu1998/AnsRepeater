@@ -4,7 +4,6 @@
 
 import time
 import json
-from json import JSONDecodeError
 from selenium.webdriver import Chrome, ChromeOptions, Firefox, FirefoxOptions
 
 
@@ -16,14 +15,8 @@ class User:
 
 
 class Spider:
-    def __init__(self, path: str):
+    def __init__(self, info: dict):
         """ Constructor """
-        try:
-            info = json.load(open(path, "r", encoding="utf-8"))
-        except FileNotFoundError or JSONDecodeError:
-            print("信息文件有误")
-            return
-
         # browser type
         type_ = info["browserType"].lower()
         if type_ not in ["chrome", "firefox"]:
@@ -41,8 +34,8 @@ class Spider:
         # webdriver
         if type_ == "chrome":
             option = ChromeOptions()
-            option.add_experimental_option('excludeSwitches', ['enable-automation'])
-            option.add_experimental_option('useAutomationExtension', False)
+            # option.add_experimental_option('excludeSwitches', ['enable-automation'])
+            # option.add_experimental_option('useAutomationExtension', False)
             # headless
             if not info["gui"]:
                 option.add_argument('--headless')
@@ -169,5 +162,10 @@ class Spider:
 
 
 if __name__ == '__main__':
-    spider = Spider("./info.json")
-    spider.solve()
+    try:
+        with open("./info.json", "r", encoding="utf-8") as f:
+            info = json.load(f)
+        spider = Spider(info)
+        spider.solve()
+    except:
+        print("解析出错")
