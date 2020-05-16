@@ -21,7 +21,7 @@ logging.basicConfig(format='%(message)s',
                     level=logging.INFO)
 
 STOP_WORDS = ["浪费", "这课", "老师", "666", "真水", "太水", "无聊", "网课", "辛苦", "谢谢", "好水",
-              "复读", "你们", "今天", "意思", "哈", "呀", "噢", "哦", "嘻"]
+              "复读", "你们", "今天", "意思", "哈", "呀", "噢", "哦", "嘻", "不错", "很好", "太好", "棒"]
 
 
 class User:
@@ -58,7 +58,10 @@ class Spider:
             if not info["gui"]:
                 option.add_argument('--headless')
             # <<< if
-            option.add_experimental_option("excludeSwitches", ["enable-logging"])
+            option.add_argument('--disable-gpu')
+            option.add_argument('blink-settings=imagesEnabled=false')    # not loading images
+            option.add_argument('--no-sandbox')
+
             self.driver = Chrome(options=option)
             # webdriver wait for resources implicitly
             self.driver.implicitly_wait(WAIT_TIME)
@@ -74,6 +77,9 @@ class Spider:
             self.driver.execute_cdp_cmd("Network.setExtraHTTPHeaders", {"headers": {"User-Agent": "browser1"}})
         else:
             option = FirefoxOptions()
+            option.add_argument('--disable-gpu')
+            option.add_argument('blink-settings=imagesEnabled=false')    # not loading images
+            option.add_argument('--no-sandbox')
             # headless
             if not info["gui"]:
                 option.headless = True
