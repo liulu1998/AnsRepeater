@@ -7,7 +7,7 @@ import time
 import json
 from json import JSONDecodeError
 import logging
-from random import choice
+from bs4 import BeautifulSoup
 # from selenium.webdriver.common.by import By
 # from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver import Chrome, ChromeOptions, Firefox, FirefoxOptions
@@ -48,6 +48,10 @@ class Spider:
         self.count = info["count"]
         # school name
         self.school = info["school"]
+
+        self.uuid = ""
+        # info of courses
+        self.course_info = []
 
         # webdriver
         if type_ == "chrome":
@@ -127,7 +131,7 @@ class Spider:
         """
         # get question id then build new URL
         id_ = int(ele.find_element_by_css_selector("a > p").get_attribute("data-question-id"))
-        url = f"https://wenda.zhihuishu.com/shareCourse/questionDetailPage?sourceType=2&qid={id_}"
+        url = f"https://creditqa-web.zhihuishu.com/shareCourse/questionDetailPage?sourceType=2&qid={id_}"
 
         # open new tab
         js = f"window.open('{url}')"
@@ -173,57 +177,80 @@ class Spider:
         # using JavaScript
         js = 'document.getElementsByClassName("option-zan")[1].click()'
         self.driver.execute_script(js)
-
+        time.sleep(0.05)
         # close new tab and back to main tab
         self.driver.close()
         self.driver.switch_to.window(self.driver.window_handles[0])
         return True
+
+    def handle_one_course(self, course_id, recruit_id) -> int:
+        """ handle single course
+        :param course_id:
+        :param recruit_id:
+        :return: number of questions answered successfully
+        """
+        base_url = f"https://creditqa-web.zhihuishu.com/shareCourse/qaAnswerIndexPage?" \
+                   f"sourceType=2&courseId={course_id}&recruitId={recruit_id}"
+        self.driver.get(base_url)
+
+        self.driver.find_element_by_css_selector("span[data-tab=lately]").click()
+        time.sleep(0.2)
+
+        # roll down to load more questions
+        for i in range(int(12 * self.count / 10)):
+            self.driver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
+            time.sleep(0.5)
+        # <<< for, roll down
+        questions = self.driver.find_elements_by_css_selector("#lateList >*")
+        cnt = 0
+
+        for q in questions:
+            # count of existing answers
+            n_answers = q.find_element_by_css_selector("span.qa_topic_answerNum").text
+            # in case n is "999+"
+            try:
+                n_answers = int(n_answers)
+            except ValueError:
+                continue
+
+            if 0 < n_answers:
+                if self.handle_one(q):
+                    cnt += 1
+            if cnt >= self.count:
+                break
+        # <<< for q in questions
+        return cnt
 
     def solve(self) -> None:
         """ answer multiple questions
         在莲池召唤我的精灵 —— 刘总
         """
         self.login()
-        # open questions' page
+        # 显式等待
         time.sleep(0.5)
-        self.driver.get("https://wenda.zhihuishu.com/shareCourse/qaAnswerIndexPage")
+        # get User's uuid
+        self.driver.get("https://onlineservice.zhihuishu.com/login/getLoginUserInfo")
+        html = self.driver.page_source
+        response = json.loads(BeautifulSoup(html, "lxml").get_text())
+        self.uuid = response["result"]["uuid"]
 
-        # select given course
-        courses = self.driver.find_elements_by_css_selector("li.clearfix > div")
+        # get all courses' info
+        course_info_url = f"https://onlineservice.zhihuishu.com/student/course/share/queryShareCourseInfo?" \
+                          f"status=0&pageNo=1&pageSize=5&uuid={self.uuid}"
+        self.driver.get(course_info_url)
+        html = self.driver.page_source
+        response = json.loads(BeautifulSoup(html, "lxml").get_text())
+        self.course_info = response["result"]["courseOpenDtos"]
 
-        for now_proceed_course in self.course:
-            for c in courses:
-                if now_proceed_course in c.get_attribute("title"):
-                    self.driver.execute_script("arguments[0].click();", c)
+        for c in self.course:
+            for i in self.course_info:
+                if c in i["courseName"]:
+                    num = self.handle_one_course(course_id=i["courseId"], recruit_id=i["recruitId"])
+                    log = f"你的名字: {self.user.name}  课程: {c}  成功复读题目数: {num}\n"
+                    logging.info(log)
                     break
-            # <<< for c in courses
-            # roll down to load more questions
-            for i in range(int(12 * self.count / 10)):
-                self.driver.execute_script("window.scrollTo(0,document.body.scrollHeight)")
-                time.sleep(0.5)
-            # <<< for
-            questions = self.driver.find_elements_by_css_selector("#lateList >*")
-            cnt = 0
-
-            for q in questions:
-                # count of existing answers
-                n_answers = q.find_element_by_css_selector(".qa_topic_reaction").\
-                    find_element_by_css_selector(".qa_topic_answerNum").text
-                # in case n is "999+"
-                try:
-                    n_answers = int(n_answers)
-                except ValueError:
-                    continue
-
-                if 0 < n_answers <= 100:
-                    if self.handle_one(q):
-                        cnt += 1
-                if cnt >= self.count:
-                    break
-            # <<< for q in questions
-            log = f"你的名字: {self.user.name}  课程: {now_proceed_course}  成功复读题目数: {cnt}\n"
-            logging.info(log)
-        # <<< for, handle multiple courses
+            # <<< for i in self.course_info
+        # <<< for c in self.course
         self.driver.quit()
 
 
