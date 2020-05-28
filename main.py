@@ -13,6 +13,7 @@ from random import choice
 from selenium.webdriver import Chrome, ChromeOptions, Firefox, FirefoxOptions
 # exceptions selenium may raise
 from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException
+from bs4 import BeautifulSoup
 
 # 隐式等待时间
 WAIT_TIME = 5
@@ -48,6 +49,8 @@ class Spider:
         self.count = info["count"]
         # school name
         self.school = info["school"]
+        # uuid
+        self.uuid = None
 
         # webdriver
         if type_ == "chrome":
@@ -60,7 +63,7 @@ class Spider:
                 option.add_argument('--headless')
             # <<< if
             option.add_argument('--disable-gpu')
-            option.add_argument('blink-settings=imagesEnabled=false')    # not loading images
+            option.add_argument('blink-settings=imagesEnabled=false')  # not loading images
             option.add_argument('--no-sandbox')
 
             self.driver = Chrome(options=option)
@@ -79,7 +82,7 @@ class Spider:
         else:
             option = FirefoxOptions()
             option.add_argument('--disable-gpu')
-            option.add_argument('blink-settings=imagesEnabled=false')    # not loading images
+            option.add_argument('blink-settings=imagesEnabled=false')  # not loading images
             option.add_argument('--no-sandbox')
             # headless
             if not info["gui"]:
@@ -94,7 +97,7 @@ class Spider:
         :param tag: the answer's node in DOM
         :return: whether it is not a bullshit
         """
-        reg = "[^0-9A-Za-z\u4e00-\u9fa5]"       # only reserve 汉字, 数字, 英文字母
+        reg = "[^0-9A-Za-z\u4e00-\u9fa5]"  # only reserve 汉字, 数字, 英文字母
         text = tag.find_element_by_css_selector("div > div > pre").text
         text = re.sub(reg, '', text)
 
@@ -184,17 +187,25 @@ class Spider:
         在莲池召唤我的精灵 —— 刘总
         """
         self.login()
-        # open questions' page
+
+        # wait 0.5 seconds to load the status of login
         time.sleep(0.5)
-        self.driver.get("https://wenda.zhihuishu.com/shareCourse/qaAnswerIndexPage")
+
+        # open questions' page
+        # time.sleep(0.5)
+        # self.driver.get("https://wenda.zhihuishu.com/shareCourse/qaAnswerIndexPage")
 
         # select given course
-        courses = self.driver.find_elements_by_css_selector("li.clearfix > div")
+        # courses = self.driver.find_elements_by_css_selector("li.clearfix > div")
+
+        # get User's shareCourse Info
+        courses = self.get_course()
 
         for now_proceed_course in self.course:
             for c in courses:
-                if now_proceed_course in c.get_attribute("title"):
-                    self.driver.execute_script("arguments[0].click();", c)
+                if now_proceed_course in c['courseName']:
+                    self.driver.get(
+                        f"https://creditqa-web.zhihuishu.com/shareCourse/qaAnswerIndexPage?sourceType=2&courseId={c['courseId']}&recruitId={c['recruitId']}")
                     break
             # <<< for c in courses
             # roll down to load more questions
@@ -225,6 +236,23 @@ class Spider:
             logging.info(log)
         # <<< for, handle multiple courses
         self.driver.quit()
+
+    def get_course(self):
+        """get the shareCourse list of user
+
+        :return: shareCourse list
+        """
+        # get User's uuid
+        self.driver.get("https://onlineservice.zhihuishu.com/login/getLoginUserInfo")
+        html = self.driver.page_source
+        response = json.loads(BeautifulSoup(html, "lxml").get_text())
+        self.uuid = response["result"]["uuid"]
+
+        # get shareCourse info
+        self.driver.get(f'https://onlineservice.zhihuishu.com/student/course/share/queryShareCourseInfo?status=0&pageNo=1&pageSize=5&uuid={self.uuid}')
+        html = self.driver.page_source
+        response = json.loads(BeautifulSoup(html, "lxml").get_text())
+        return response["result"]["courseOpenDtos"]
 
 
 if __name__ == '__main__':
