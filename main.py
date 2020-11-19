@@ -118,7 +118,9 @@ class Spider:
         # school name
         self.driver.find_element_by_id("quickSearch").send_keys(self.school[0: len(self.school) - 1])
         schools = self.driver.find_elements_by_css_selector("#schoolListCode > *")
-        schools[0].click()
+        # >>> fixed issue #3 about school name when logging in
+        schools[-1].click()
+        # <<< issue fixed
         # student id and password
         self.driver.find_element_by_id("clCode").send_keys(self.user.username)
         self.driver.find_element_by_id("clPassword").send_keys(self.user.password)

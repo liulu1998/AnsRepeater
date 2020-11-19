@@ -18,17 +18,17 @@
 
 1. 配置浏览器驱动   
    - 若使用 ```Google Chrome```或基于 ```chrome``` 内核的其他浏览器(如 360 等), 自行安装**合适版本**的 ```chromedriver```    
-   - 若使用 ```Firefox```, 自行安装合适版本的 ```geckodriver```
+   - 若使用 ```Firefox```, 自行安装**合适版本**的 ```geckodriver```
    
 2. 安装 ```Python``` 依赖库  
-  ```pip install selenium bs4 lxml -i https://pypi.tuna.tsinghua.edu.cn/simple```
+    ```pip install selenium bs4 lxml -i https://pypi.tuna.tsinghua.edu.cn/simple```
   
 3. 填写目录下的 ```info.json```
     ```
     {
-        "name": "刘xx",                  // 姓名
-        "school": "xx大学",             // 学校名
-        "username" : "2017061910",     // 学号
+        "name": "张三",                  // 姓名
+        "school": "xx大学",             // 学校全称
+        "username" : "2077010101",     // 学号
         "password": "abc",            // 密码, 若过于简单, 请自行修改密码
         "course": ["管理学", "毛泽东"],          // 完整课程名, 支持多个课程
         // "course": ["管理学"],    // 单个课程如此填写
@@ -42,3 +42,4 @@
 4. 运行脚本  
   - ```python main.py```，运行结束后将输出信息
   - 若使用 ```Windows``` 系统，可双击 ```run.bat```
+
