@@ -207,13 +207,16 @@ class Spider:
         cnt = 0
 
         for q in questions:
+            # >>> fix issue #3, cause: css class name changed
             # count of existing answers
-            n_answers = q.find_element_by_css_selector("span.qa_topic_answerNum").text
+            n_answers = q.find_element_by_css_selector("span.qa_topic_answerNum1").text
+
             # in case n is "999+"
             try:
-                n_answers = int(n_answers)
+                n_answers = int(re.findall(r"\d+\.?\d*", n_answers)[0])
             except ValueError:
                 continue
+            # <<< fix issue #3
 
             if 0 < n_answers:
                 if self.handle_one(q):
@@ -233,8 +236,15 @@ class Spider:
         # get User's uuid
         self.driver.get("https://onlineservice.zhihuishu.com/login/getLoginUserInfo")
         html = self.driver.page_source
+
         response = json.loads(BeautifulSoup(html, "lxml").get_text())
-        self.uuid = response["result"]["uuid"]
+
+        try:
+            self.uuid = response["result"]["uuid"]
+        except TypeError:
+            logging.critical("登录失败!")
+            self.driver.quit()
+            return
 
         # get all courses' info
         course_info_url = f"https://onlineservice.zhihuishu.com/student/course/share/queryShareCourseInfo?" \
