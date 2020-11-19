@@ -1,0 +1,10 @@
+{
+  "name": "张三",
+  "school": "哈尔滨佛学院",
+  "username" : "2077010101",
+  "password": "abc",
+  "course": ["管理学", "毛泽东"],
+  "count": 3,
+  "browserType": "chrome",
+  "gui": true 
+}
