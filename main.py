@@ -242,7 +242,12 @@ class Spider:
         self.driver.get(course_info_url)
         html = self.driver.page_source
         response = json.loads(BeautifulSoup(html, "lxml").get_text())
+
         self.course_info = response["result"]["courseOpenDtos"]
+        if not self.course_info:
+            logging.critical("当前没有学习中的课程!")
+            self.driver.quit()
+            return
 
         for c in self.course:
             for i in self.course_info:
